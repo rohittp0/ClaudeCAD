@@ -1,0 +1,7 @@
+{
+  "name": "claudecad",
+  "version": "0.1.0",
+  "description": "3D modeling skills for Claude Code - design, validate, and export 3D models across multiple tools and formats",
+  "repository": "https://github.com/rohittp0/ClaudeCAD.git",
+  "keywords": ["3d-modeling", "cad", "openscad", "blender", "stl", "parametric-design", "3d-printing"]
+}
