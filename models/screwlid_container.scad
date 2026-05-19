@@ -45,27 +45,27 @@ knurl_count    = 24;     // grip ridges around lid OD
 knurl_depth    = 0.8;
 
 // --- Resolution for helical extrusion ---
-thread_fn      = 64;                              // segments around circumference of thread profile
-thread_slices  = ceil(neck_h / pitch * 24);       // vertical slices per thread region
+thread_fn      = 96;                              // segments around circumference of thread profile
+thread_slices  = ceil(neck_h / pitch * 96);       // vertical slices per thread region (96/turn = smooth)
 
 // =========================================================
 // === Thread profile (2D): a circle + outward triangular tooth.
 // Extruding this with twist creates a single helical external thread.
 // =========================================================
 module thread_profile_2d(minor_d, depth, pitch_axial) {
-    // tooth axial footprint (controls flank slope)
-    tooth_w = pitch_axial * 0.55;
+    // Trapezoidal (Acme-style) tooth: flat crest + sloped flanks.
+    // tooth_w_root = footprint at root (controls flank slope);
+    // tooth_w_crest = flat top width.
+    tooth_w_root  = pitch_axial * 0.65;
+    tooth_w_crest = pitch_axial * 0.30;
     union() {
         circle(d = minor_d);
-        // Tooth sticking out radially. polygon is in the X-Z plane of the
-        // 2D shape's local frame: X = radial, Y = axial direction (becomes Z
-        // after extrusion). The Y coords here become axial offsets after
-        // extrusion; with twist they create the helix.
         translate([minor_d/2 - 0.05, 0])
             polygon([
-                [0,           -tooth_w/2],
-                [depth,        0],
-                [0,            tooth_w/2]
+                [0,      -tooth_w_root/2],
+                [depth,  -tooth_w_crest/2],
+                [depth,   tooth_w_crest/2],
+                [0,       tooth_w_root/2]
             ]);
     }
 }
@@ -154,14 +154,11 @@ module lid() {
                         cylinder(d = knurl_depth * 2, h = lid_skirt_h - 1);
             }
         }
-        // Bore at MINOR thread diameter — leaves inward helical ridges
-        // (the internal thread crests) once the helical cutter runs.
+        // Single helical bore: cuts the minor-dia hole AND the helical groove
+        // out to major-dia in one extrude (avoids coincident surfaces).
         translate([0, 0, lid_top_wall])
-            cylinder(d = lid_inner_minor_d, h = lid_skirt_h + 1);
-        // Helical groove: opens the bore out from minor to major along the helix
-        translate([0, 0, lid_top_wall + axial_clear])
             internal_thread_cutter(lid_inner_minor_d,
-                                   neck_h,
+                                   lid_skirt_h + 0.5,   // span full bore + tiny overshoot
                                    pitch,
                                    thread_depth);
         // Chamfer the lid mouth (outside-bottom edge) for easy starting
@@ -176,14 +173,11 @@ module lid() {
 }
 
 // =========================================================
-// === Part selector ===
-// Override from CLI: openscad -D 'part="body"' ...    (or "lid", "both")
+// === Layout: body and lid side-by-side on the build plate ===
+// (Skip when this file is included by another that overrides `render`.)
 // =========================================================
-part = "both";
-
-if (part == "body")      body();
-else if (part == "lid")  lid();
-else {
+render_assembly = true;
+if (render_assembly) {
     body();
     translate([body_od/2 + lid_od/2 + 8, 0, 0]) lid();
 }
