@@ -154,10 +154,11 @@ module lid() {
                         cylinder(d = knurl_depth * 2, h = lid_skirt_h - 1);
             }
         }
-        // Bore at thread crest diameter (clearance) — this is the "open mouth"
+        // Bore at MINOR thread diameter — leaves inward helical ridges
+        // (the internal thread crests) once the helical cutter runs.
         translate([0, 0, lid_top_wall])
-            cylinder(d = lid_inner_major_d, h = lid_skirt_h + 1);
-        // Cut the helical thread cavity into the bore wall
+            cylinder(d = lid_inner_minor_d, h = lid_skirt_h + 1);
+        // Helical groove: opens the bore out from minor to major along the helix
         translate([0, 0, lid_top_wall + axial_clear])
             internal_thread_cutter(lid_inner_minor_d,
                                    neck_h,
